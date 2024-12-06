@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: devops-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: devops-user-route
+          uri: http://devops-user:8081
+          predicates:
+            - Path=/devops-user/**
+          filters:
+            - RewritePath=/devops-user(?<segment>/?.*), /api/devops-user$\{segment}
+        - id: devops-accommodation
+          uri: http://devops-accommodation:8082
+          predicates:
+            - Path=/devops-accommodation/**
+          filters:
+            - RewritePath=/devops-accommodation(?<segment>/?.*), /api/devops-accommodation$\{segment}
