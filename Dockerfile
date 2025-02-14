@@ -1,5 +1,5 @@
 # Use an official Maven image to build the Spring Boot app
-FROM maven:3.8.3-openjdk-17 AS build
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copy the pom.xml and download dependencies
@@ -11,7 +11,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Use an OpenJDK image to run the application
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:21-jdk
 WORKDIR /app
 
 # Copy the built JAR from the Maven image
