@@ -1,5 +1,6 @@
 package com.devops.devops_gateway.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ import com.devops.devops_gateway.util.TokenUtils;
 
 //Kontroler zaduzen za autentifikaciju korisnika
 @RestController
-@RequestMapping(value = "/auth", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/auth", produces = MediaType.APPLICATION_JSON_VALUE)
 //@CrossOrigin(origins = "http://localhost:4200")
 public class AuthenticationController {
 
@@ -70,5 +71,18 @@ public class AuthenticationController {
 
 		//TODO: diskutovati da li odmah i ulogovati korisnika pri registraciji? Ja sam za
 		return new ResponseEntity<>(user, HttpStatus.CREATED);
+	}
+
+
+	@PostMapping("/logout")
+	public ResponseEntity<Void> logout(HttpServletRequest request) {
+		String authToken = tokenUtils.getToken(request);
+
+		if (authToken != null) {
+			tokenUtils.blacklistToken(authToken);
+		}
+
+		SecurityContextHolder.clearContext();
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 }

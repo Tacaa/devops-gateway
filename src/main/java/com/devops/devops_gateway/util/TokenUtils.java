@@ -1,6 +1,8 @@
 package com.devops.devops_gateway.util;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 
 import com.devops.devops_gateway.model.User;
@@ -33,6 +35,8 @@ public class TokenUtils {
 	// Naziv headera kroz koji ce se prosledjivati JWT u komunikaciji server-klijent
 	@Value("Authorization")
 	private String AUTH_HEADER;
+
+	private Set<String> blacklistedTokens = new HashSet<>();
 	
 	// Moguce je generisati JWT za razlicite klijente (npr. web i mobilni klijenti nece imati isto trajanje JWT, 
 	// JWT za mobilne klijente ce trajati duze jer se mozda aplikacija redje koristi na taj nacin)
@@ -45,7 +49,21 @@ public class TokenUtils {
 
 	// Algoritam za potpisivanje JWT
 	private SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS512;
-	
+
+
+
+
+	// ============= Funkcije za postavku tokena na crnu listu =============
+
+	public void blacklistToken(String token) {
+		blacklistedTokens.add(token);
+	}
+
+	public boolean isTokenBlacklisted(String token) {
+		return blacklistedTokens.contains(token);
+	}
+
+	// =================================================================
 
 	// ============= Funkcije za generisanje JWT tokena =============
 	

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -89,9 +90,11 @@ public class WebSecurityConfig {
         http.csrf((csrf) -> csrf.disable()); //CSRF zaštita je isključena
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); //Postavlja politiku upravljanja sesijama na STATELESS
         http.exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(restAuthenticationEntryPoint));
+
         http.authorizeHttpRequests(request -> {
-            request.requestMatchers(new AntPathRequestMatcher("/auth/login")).permitAll()
-                    .requestMatchers(new AntPathRequestMatcher("/auth/signup")).permitAll()
+            request.requestMatchers(new AntPathRequestMatcher("/api/auth/login")).permitAll()
+                    .requestMatchers(new AntPathRequestMatcher("/api/auth/signup")).permitAll()
+                    .requestMatchers(new AntPathRequestMatcher("/api/auth/logout")).authenticated()
                     .requestMatchers(new AntPathRequestMatcher("/error")).permitAll()
 
                     // User service endpoints

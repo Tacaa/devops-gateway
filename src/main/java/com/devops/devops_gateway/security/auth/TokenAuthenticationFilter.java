@@ -41,10 +41,17 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 		String username;
 		// 1. Preuzimanje JWT tokena iz zahteva
 		String authToken = tokenUtils.getToken(request);
-		
+
 		try {
 	
 			if (authToken != null && !authToken.equals("")) {
+				
+				//provjera dodatna da li je token na crnoj listi
+				if (tokenUtils.isTokenBlacklisted(authToken)) {
+					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
+				}
+
 				// 2. Citanje korisnickog imena iz tokena
 				username = tokenUtils.getUsernameFromToken(authToken);
 				
