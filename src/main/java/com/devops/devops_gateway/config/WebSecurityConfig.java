@@ -95,27 +95,28 @@ public class WebSecurityConfig {
                     .requestMatchers(new AntPathRequestMatcher("/error")).permitAll()
 
                     // User service endpoints
-                    .requestMatchers(new AntPathRequestMatcher("/api/user/register")).permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/user/all").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/user/search").permitAll()
-                    .requestMatchers(HttpMethod.DELETE, "/api/user/{id}").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/user/{id}").hasAnyRole("GUEST", "HOST")
+                    .requestMatchers(HttpMethod.GET, "/api/user/all").hasAnyRole("GUEST", "HOST")
+                    .requestMatchers(HttpMethod.GET, "/api/user").hasAnyRole("GUEST", "HOST")
+                    .requestMatchers(HttpMethod.GET, "/api/user/search").hasAnyRole("GUEST", "HOST")
+                    .requestMatchers(HttpMethod.PUT, "/api/user/{id}").hasAnyRole("GUEST", "HOST")
+                    .requestMatchers(HttpMethod.DELETE, "/api/user/{id}").hasAnyRole("GUEST", "HOST")
 
-                    // Accommodation endpoints
+                    //Accommodation endpoints
                     .requestMatchers(HttpMethod.GET, "/api/accommodation/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/accommodation").hasRole("HOST")
                     .requestMatchers(HttpMethod.POST, "/api/accommodation/search").permitAll()
 
-                    // Availability endpoints
-                    .requestMatchers(HttpMethod.GET, "/api/availability/**").permitAll()
-                    .requestMatchers(new AntPathRequestMatcher("/api/availability/**")).hasRole("HOST")
+                    //Availability endpoints
+                    .requestMatchers(HttpMethod.GET, "/api/availability/{accommodationId}").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/availability").hasRole("HOST")
+                    .requestMatchers(HttpMethod.PUT, "/api/availability/{availabilityId}").hasRole("HOST")
 
                     // Reservation endpoints
                     .requestMatchers(HttpMethod.POST, "/api/reservation").hasRole("GUEST")
-                    .requestMatchers(HttpMethod.DELETE, "/api/reservation/{id}").hasAnyRole("GUEST", "HOST")
-                    .requestMatchers(HttpMethod.GET, "/api/reservation/all-host-pending-accommodation/**").hasRole("HOST")
+                    .requestMatchers(HttpMethod.DELETE, "/api/reservation/{id}").hasRole("GUEST")
+                    .requestMatchers(HttpMethod.GET, "/api/reservation/all-host-pending-accommodation/{hostId}").hasRole("HOST")
                     .requestMatchers(HttpMethod.POST, "/api/reservation/save-manually-approved").hasRole("HOST")
-                    .requestMatchers(HttpMethod.GET, "/api/reservation/did-guest-had-reservation-in-accommodation").hasRole("GUEST")
-                    .requestMatchers(HttpMethod.GET, "/api/reservation/did-guest-had-reservation-in-host-accommodation").hasRole("GUEST")
 
                     // Review endpoints
                     .requestMatchers(HttpMethod.GET, "/api/accommodation-review/**").permitAll()

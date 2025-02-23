@@ -40,33 +40,22 @@ public class AuthenticationController {
 
 	@Autowired
 	private UserService userService;
-	
-	// Prvi endpoint koji pogadja korisnik kada se loguje.
-	// Tada zna samo svoje korisnicko ime i lozinku i to prosledjuje na backend.
+
 	@PostMapping("/login")
 	public ResponseEntity<UserTokenState> createAuthenticationToken(
 			@RequestBody JwtAuthenticationRequest authenticationRequest, HttpServletResponse response) {
-
-
-		// Ukoliko kredencijali nisu ispravni, logovanje nece biti uspesno, desice se
-		// AuthenticationException
 		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
 				authenticationRequest.getUsername(), authenticationRequest.getPassword()));
 
-		// Ukoliko je autentifikacija uspesna, ubaci korisnika u trenutni security
-		// kontekst
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-		// Kreiraj token za tog korisnika
 		User user = (User) authentication.getPrincipal();
 		String jwt = tokenUtils.generateToken(user);
 		int expiresIn = tokenUtils.getExpiredIn();
 
-		// Vrati token kao odgovor na uspesnu autentifikaciju
 		return ResponseEntity.ok(new UserTokenState(jwt, expiresIn));
 	}
 
-	// Endpoint za registraciju novog korisnika
 	@PostMapping("/signup")
 	public ResponseEntity<User> addUser(@RequestBody UserRequest userRequest, UriComponentsBuilder ucBuilder) {
 		User existUser = this.userService.findByUsername(userRequest.getUsername());
@@ -75,8 +64,11 @@ public class AuthenticationController {
 			throw new ResourceConflictException(userRequest.getId(), "Username already exists");
 		}
 
+		//TODO: promijeniti UserRequest dodati polja da se mozeregistrovati i na user service
+		//TODO: povezati sa userservisom i sacuvati u njegovoj bazi
 		User user = this.userService.save(userRequest);
 
+		//TODO: diskutovati da li odmah i ulogovati korisnika pri registraciji? Ja sam za
 		return new ResponseEntity<>(user, HttpStatus.CREATED);
 	}
 }
