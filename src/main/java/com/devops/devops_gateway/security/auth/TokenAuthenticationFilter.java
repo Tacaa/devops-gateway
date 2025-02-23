@@ -45,7 +45,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 		try {
 	
 			if (authToken != null && !authToken.equals("")) {
-				
+
 				//provjera dodatna da li je token na crnoj listi
 				if (tokenUtils.isTokenBlacklisted(authToken)) {
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

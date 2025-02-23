@@ -1,5 +1,7 @@
 package com.devops.devops_gateway.controller;
 
+import com.devops.devops_gateway.model.Role;
+import com.devops.devops_gateway.service.RoleService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -9,8 +11,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +30,9 @@ import com.devops.devops_gateway.exception.ResourceConflictException;
 import com.devops.devops_gateway.model.User;
 import com.devops.devops_gateway.service.UserService;
 import com.devops.devops_gateway.util.TokenUtils;
+
+import java.sql.Timestamp;
+import java.util.List;
 
 
 //Kontroler zaduzen za autentifikaciju korisnika
@@ -42,9 +50,14 @@ public class AuthenticationController {
 	@Autowired
 	private UserService userService;
 
-	@PostMapping("/login")
-	public ResponseEntity<UserTokenState> createAuthenticationToken(
-			@RequestBody JwtAuthenticationRequest authenticationRequest, HttpServletResponse response) {
+	@Autowired
+	private RoleService roleService;
+
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+
+	//metoda koja sluzi za logovanje, izdvojena kako se ne bi duplirao kod i u registraciji
+	private UserTokenState login(JwtAuthenticationRequest authenticationRequest){
 		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
 				authenticationRequest.getUsername(), authenticationRequest.getPassword()));
 
@@ -54,23 +67,64 @@ public class AuthenticationController {
 		String jwt = tokenUtils.generateToken(user);
 		int expiresIn = tokenUtils.getExpiredIn();
 
-		return ResponseEntity.ok(new UserTokenState(jwt, expiresIn));
+		// LOGGING FOR DEBUGGING
+		System.out.println("User " + user.getUsername() + " successfully authenticated.");
+		System.out.println("SecurityContext authentication: " + SecurityContextHolder.getContext().getAuthentication());
+
+
+		return new UserTokenState(jwt, expiresIn);
 	}
 
+
+	@PostMapping("/login")
+	public ResponseEntity<UserTokenState> createAuthenticationToken(
+			@RequestBody JwtAuthenticationRequest authenticationRequest, HttpServletResponse response) {
+
+		UserTokenState token = this.login(authenticationRequest);
+		return ResponseEntity.ok(token);
+	}
+
+
 	@PostMapping("/signup")
-	public ResponseEntity<User> addUser(@RequestBody UserRequest userRequest, UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<UserTokenState> addUser(@RequestBody UserRequest userRequest, UriComponentsBuilder ucBuilder) {
 		User existUser = this.userService.findByUsername(userRequest.getUsername());
 
 		if (existUser != null) {
-			throw new ResourceConflictException(userRequest.getId(), "Username already exists");
+			throw new ResourceConflictException(existUser.getId(), "Username already exists");
 		}
 
-		//TODO: promijeniti UserRequest dodati polja da se mozeregistrovati i na user service
-		//TODO: povezati sa userservisom i sacuvati u njegovoj bazi
-		User user = this.userService.save(userRequest);
+		//pronadji rolu
 
-		//TODO: diskutovati da li odmah i ulogovati korisnika pri registraciji? Ja sam za
-		return new ResponseEntity<>(user, HttpStatus.CREATED);
+		List<Role> roles;
+		if(userRequest.getRole() == com.devops.devops_gateway.enumeration.Role.GUEST){
+			roles = roleService.findByName("ROLE_GUEST");
+		}else{
+			roles = roleService.findByName("ROLE_HOST");
+		}
+
+
+
+		User user = User.builder()
+				.firstName(userRequest.getFirstname())
+				.lastName(userRequest.getLastname())
+				.email(userRequest.getEmail())
+				.username(userRequest.getUsername())
+				.password(passwordEncoder.encode(userRequest.getPassword()))
+				.roles(roles)
+				.enabled(true)
+				.lastPasswordResetDate(new Timestamp(System.currentTimeMillis()-100))
+				.build();
+
+
+		//TODO: povezati sa userservisom i sacuvati u njegovoj bazi
+		user = this.userService.save(user);
+
+
+		//kada se registrovao korisnik neka se odmah i loguje (tj. dobije svoj token i postavi u kontekst)
+		JwtAuthenticationRequest jwtAuthenticationRequest = new JwtAuthenticationRequest(userRequest.getUsername(), userRequest.getPassword());
+		UserTokenState token = this.login(jwtAuthenticationRequest);
+
+		return new ResponseEntity<>(token, HttpStatus.CREATED);
 	}
 
 

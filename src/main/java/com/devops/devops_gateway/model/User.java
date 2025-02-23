@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -24,6 +27,9 @@ import jakarta.persistence.JoinColumn;
 
 @Entity
 @Table(name="USERS")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User implements UserDetails {
 	private static final long serialVersionUID = 1L;
     @Id

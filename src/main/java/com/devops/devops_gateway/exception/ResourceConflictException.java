@@ -3,18 +3,18 @@ package com.devops.devops_gateway.exception;
 public class ResourceConflictException extends RuntimeException {
 	private static final long serialVersionUID = 1791564636123821405L;
 
-	private Long resourceId;
+	private Integer resourceId;
 
-	public ResourceConflictException(Long resourceId, String message) {
+	public ResourceConflictException(Integer resourceId, String message) {
 		super(message);
 		this.setResourceId(resourceId);
 	}
 
-	public Long getResourceId() {
+	public Integer getResourceId() {
 		return resourceId;
 	}
 
-	public void setResourceId(Long resourceId) {
+	public void setResourceId(Integer resourceId) {
 		this.resourceId = resourceId;
 	}
 }
