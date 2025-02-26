@@ -1,5 +1,7 @@
 package com.devops.devops_gateway.controller;
 
+import com.devops.devops_gateway.client.UserClient;
+import com.devops.devops_gateway.dto.CreateUserDTO;
 import com.devops.devops_gateway.model.Role;
 import com.devops.devops_gateway.service.RoleService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,6 +58,9 @@ public class AuthenticationController {
 	@Autowired
 	private BCryptPasswordEncoder passwordEncoder;
 
+	@Autowired
+	private UserClient userClient;
+
 	//metoda koja sluzi za logovanje, izdvojena kako se ne bi duplirao kod i u registraciji
 	private UserTokenState login(JwtAuthenticationRequest authenticationRequest){
 		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
@@ -85,12 +90,25 @@ public class AuthenticationController {
 	}
 
 
-	@PostMapping("/signup")
+	@PostMapping("/register")
 	public ResponseEntity<UserTokenState> addUser(@RequestBody UserRequest userRequest, UriComponentsBuilder ucBuilder) {
+		if(userRequest.getFirstname() == null || userRequest.getLastname() == null || userRequest.getUsername() == null
+				|| userRequest.getPassword() == null || userRequest.getEmail() == null || userRequest.getRole() == null
+				|| userRequest.getAddress() == null || userRequest.getAddress().getStreet() == null ||  userRequest.getAddress().getCity() == null
+				||  userRequest.getAddress().getCountry() == null){
+			return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+		}
+
 		User existUser = this.userService.findByUsername(userRequest.getUsername());
 
 		if (existUser != null) {
 			throw new ResourceConflictException(existUser.getId(), "Username already exists");
+		}
+
+		existUser = this.userService.findByEmail(userRequest.getEmail());
+
+		if (existUser != null) {
+			throw new ResourceConflictException(existUser.getId(), "Email already exists");
 		}
 
 		//pronadji rolu
@@ -102,8 +120,6 @@ public class AuthenticationController {
 			roles = roleService.findByName("ROLE_HOST");
 		}
 
-
-
 		User user = User.builder()
 				.firstName(userRequest.getFirstname())
 				.lastName(userRequest.getLastname())
@@ -112,13 +128,17 @@ public class AuthenticationController {
 				.password(passwordEncoder.encode(userRequest.getPassword()))
 				.roles(roles)
 				.enabled(true)
-				.lastPasswordResetDate(new Timestamp(System.currentTimeMillis()-100))
+				.lastPasswordResetDate(new Timestamp(System.currentTimeMillis()))
 				.build();
 
 
-		//TODO: povezati sa userservisom i sacuvati u njegovoj bazi
+
 		user = this.userService.save(user);
 
+		boolean saved = userClient.createUserInUserService(userRequest);
+		if(!saved){
+			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
+		}
 
 		//kada se registrovao korisnik neka se odmah i loguje (tj. dobije svoj token i postavi u kontekst)
 		JwtAuthenticationRequest jwtAuthenticationRequest = new JwtAuthenticationRequest(userRequest.getUsername(), userRequest.getPassword());

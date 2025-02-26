@@ -48,6 +48,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
 				//provjera dodatna da li je token na crnoj listi
 				if (tokenUtils.isTokenBlacklisted(authToken)) {
+					System.out.println("Uslo da je na black listi!");
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 					return;
 				}
@@ -67,6 +68,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 						TokenBasedAuthentication authentication = new TokenBasedAuthentication(userDetails);
 						authentication.setToken(authToken);
 						SecurityContextHolder.getContext().setAuthentication(authentication);					
+					}else{
+						System.out.println("nije proslo jer je nevalidan");
 					}
 				}
 			}
