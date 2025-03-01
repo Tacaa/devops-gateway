@@ -95,6 +95,7 @@ public class WebSecurityConfig {
             request.requestMatchers(new AntPathRequestMatcher("/api/auth/login")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/api/auth/register")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/api/auth/logout")).authenticated()
+                    .requestMatchers(new AntPathRequestMatcher("/api/gateway/update-user/{id}")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/error")).permitAll()
 
                     // User service endpoints
@@ -158,7 +159,7 @@ public class WebSecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://devops-user:8081"));
         configuration.setAllowedMethods(Arrays.asList("POST", "PUT", "GET", "OPTIONS", "DELETE", "PATCH")); // or simply "*"
         configuration.setAllowedHeaders(Arrays.asList("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

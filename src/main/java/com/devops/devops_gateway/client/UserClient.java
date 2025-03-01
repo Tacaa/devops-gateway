@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 @FeignClient(value = "user", url = "http://devops-user:8081")
 public interface UserClient {
-    @RequestMapping(method = RequestMethod.POST, value = "/api/user/register")
+    @RequestMapping(method = RequestMethod.POST, value = "/api/user/save")
     Boolean createUserInUserService(@RequestBody UserRequest userRequest);
 }

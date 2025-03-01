@@ -2,6 +2,7 @@ package com.devops.devops_gateway.service.impl;
 
 import java.util.List;
 
+import com.devops.devops_gateway.dto.UpdateUserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -64,6 +65,25 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public User save(User user){
 		return userRepository.save(user);
+	}
+
+	@Override
+	public boolean update(Integer id, UpdateUserDTO updateUserDTO) {
+		User user = userRepository.findById(id).orElse(null);
+
+		if(user == null){
+			return false;
+		}
+
+		user.setFirstName(updateUserDTO.getFirstname());
+		user.setLastName(updateUserDTO.getLastname());
+		user.setUsername(updateUserDTO.getUsername());
+		user.setPassword(passwordEncoder.encode(updateUserDTO.getPassword()));
+		user.setEmail(updateUserDTO.getEmail());
+
+		userRepository.save(user);
+		return true;
+
 	}
 
 	@Override
