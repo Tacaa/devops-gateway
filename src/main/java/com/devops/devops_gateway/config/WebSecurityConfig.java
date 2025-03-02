@@ -96,6 +96,7 @@ public class WebSecurityConfig {
                     .requestMatchers(new AntPathRequestMatcher("/api/auth/register")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/api/auth/logout")).authenticated()
                     .requestMatchers(new AntPathRequestMatcher("/api/gateway/update-user/{id}")).permitAll()
+                    .requestMatchers(new AntPathRequestMatcher("/api/gateway/disable-user/{id}")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/error")).permitAll()
 
                     // User service endpoints

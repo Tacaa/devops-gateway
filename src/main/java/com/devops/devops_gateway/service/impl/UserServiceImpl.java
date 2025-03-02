@@ -91,4 +91,13 @@ public class UserServiceImpl implements UserService {
 		return userRepository.findByEmail(email);
 	}
 
+	@Override
+	public void disableUser(Integer id){
+		User user = userRepository.findById(id).orElse(null);
+
+		if(user != null){
+			user.setEnabled(false);
+			userRepository.save(user);
+		}
+	}
 }

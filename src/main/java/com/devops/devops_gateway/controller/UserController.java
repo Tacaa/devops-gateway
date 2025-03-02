@@ -25,4 +25,10 @@ public class UserController {
     public boolean updateUser(@PathVariable("id") Integer id, @RequestBody UpdateUserDTO updateUserDTO){
         return userService.update(id, updateUserDTO);
     }
+
+    @PutMapping(value = "disable-user/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void disableUser(@PathVariable("id") Integer id){
+        userService.disableUser(id);
+    }
 }

@@ -14,4 +14,5 @@ public interface UserService {
 	User save(UserRequest userRequest);
     User save(User user);
     boolean update(Integer id, UpdateUserDTO updateUserDTO);
+    void disableUser(Integer id);
 }
