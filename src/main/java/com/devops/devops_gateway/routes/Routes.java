@@ -74,10 +74,6 @@ public class Routes {
                         req -> HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + RESERVATION_API_PATH + "/all-host-pending-accommodation/" + req.pathVariable("hostId")).handle(req))
                 .route(RequestPredicates.POST(RESERVATION_API_PATH + "/save-manually-approved"),
                         HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + RESERVATION_API_PATH + "/save-manually-approved"))
-                .route(RequestPredicates.GET(RESERVATION_API_PATH + "/did-guest-had-reservation-in-accommodation"),
-                        HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + RESERVATION_API_PATH + "/did-guest-had-reservation-in-accommodation"))
-                .route(RequestPredicates.GET(RESERVATION_API_PATH + "/did-guest-had-reservation-in-host-accommodation"),
-                        HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + RESERVATION_API_PATH + "/did-guest-had-reservation-in-host-accommodation"))
 
 
                 // Accommodation Review routes
