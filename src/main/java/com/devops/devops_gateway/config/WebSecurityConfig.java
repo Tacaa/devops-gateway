@@ -98,6 +98,7 @@ public class WebSecurityConfig {
                     .requestMatchers(new AntPathRequestMatcher("/api/gateway/update-user/{id}")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/api/gateway/disable-user/{id}")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/error")).permitAll()
+                    .requestMatchers(new AntPathRequestMatcher("/api/auth/current-user")).authenticated()
 
                     // User service endpoints
                     .requestMatchers(HttpMethod.GET, "/api/user/{id}").hasAnyRole("GUEST", "HOST")
