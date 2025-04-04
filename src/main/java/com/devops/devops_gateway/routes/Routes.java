@@ -25,6 +25,10 @@ public class Routes {
     private static final String ACCOMMODATION_REVIEW_API_PATH = "/api/accommodation-review";
     private static final String HOST_REVIEW_API_PATH = "/api/host-review";
 
+    private static final String NOTIICATIONS_SERVICE_BASE_URL = "http://devops-notifications:8083";
+    private static final String NOTIFICATION_API_PATH = "/api/notifications";
+    private static final String NOTIFICATIONS_PREFERENCES_API_PATH = "/api/notifications-preferences";
+
 
     @Bean
     public RouterFunction<ServerResponse> userServiceRoute() {
@@ -99,6 +103,19 @@ public class Routes {
                         req -> HandlerFunctions.http(REVIEW_SERVICE_BASE_URL + HOST_REVIEW_API_PATH + "/" + req.pathVariable("id")).handle(req))
                 .route(RequestPredicates.DELETE(HOST_REVIEW_API_PATH + "/{id}"),
                         req -> HandlerFunctions.http(REVIEW_SERVICE_BASE_URL + HOST_REVIEW_API_PATH + "/" + req.pathVariable("id")).handle(req))
+
+                // Notifications routes
+                .route(RequestPredicates.GET(NOTIFICATION_API_PATH + "/{userId}"),
+                        req -> HandlerFunctions.http(NOTIICATIONS_SERVICE_BASE_URL + NOTIFICATION_API_PATH + "/" + req.pathVariable("userId")).handle(req))
+                .route(RequestPredicates.PUT(NOTIFICATION_API_PATH + "/read"),
+                        HandlerFunctions.http(NOTIICATIONS_SERVICE_BASE_URL + NOTIFICATIONS_PREFERENCES_API_PATH + "/read"))
+
+                // Notifications preferences routes
+                .route(RequestPredicates.GET(NOTIFICATIONS_PREFERENCES_API_PATH + "/{userId}"),
+                        req -> HandlerFunctions.http(NOTIICATIONS_SERVICE_BASE_URL + NOTIFICATIONS_PREFERENCES_API_PATH + "/" + req.pathVariable("userId")).handle(req))
+                .route(RequestPredicates.PUT(NOTIFICATIONS_PREFERENCES_API_PATH),
+                        HandlerFunctions.http(NOTIICATIONS_SERVICE_BASE_URL + NOTIFICATIONS_PREFERENCES_API_PATH))
+
 
                 .build();
     }
