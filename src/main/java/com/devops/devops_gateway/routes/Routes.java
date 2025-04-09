@@ -1,13 +1,22 @@
 package com.devops.devops_gateway.routes;
 
 
+import com.devops.devops_gateway.model.User;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
+
+import java.net.URI;
 
 @Configuration
 public class Routes {
@@ -65,9 +74,97 @@ public class Routes {
                 .route(RequestPredicates.GET(AVAILABILITY_API_PATH + "/{accommodationId}"),
                         HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH))
                 .route(RequestPredicates.POST(AVAILABILITY_API_PATH),
-                        HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH))
+                req -> {
+                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+                    if (auth != null && auth.isAuthenticated()) {
+                        User user = (User) auth.getPrincipal();
+                        String userId = String.valueOf(user.getId());
+
+                        try {
+                            // Pročitaj tijelo zahtjeva
+                            String requestBody = req.body(String.class);
+
+                            RestTemplate restTemplate = new RestTemplate();
+
+                            HttpHeaders headers = new HttpHeaders();
+                            headers.setAll(req.headers().asHttpHeaders().toSingleValueMap());
+                            headers.add("X-User-Id", userId);
+
+                            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+                            String url = ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH;
+
+                            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+                            return ServerResponse.status(response.getStatusCode())
+                                    .body(response.getBody());
+
+                        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+                            // Detekcija poznatih grešaka po status kodu
+                            HttpStatusCode status = ex.getStatusCode();
+                            String responseBody = ex.getResponseBodyAsString();
+
+                            return ServerResponse.status(status).body(responseBody);
+
+                        } catch (Exception ex) {
+                            // Bilo koja druga greška
+                            ex.printStackTrace();
+                            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                    .body("Unexpected error occurred: " + ex.getMessage());
+                        }
+                    } else {
+                        return ServerResponse.status(HttpStatus.UNAUTHORIZED).build();
+                    }
+                })
+
                 .route(RequestPredicates.PUT(AVAILABILITY_API_PATH + "/{availabilityId}"),
-                        req -> HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH + "/" + req.pathVariable("availabilityId")).handle(req))
+                        req -> {
+                            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+                            if (auth != null && auth.isAuthenticated()) {
+                                User user = (User) auth.getPrincipal();
+                                String userId = String.valueOf(user.getId());
+
+                                try {
+                                    // Pročitaj tijelo zahtjeva
+                                    String requestBody = req.body(String.class);
+
+                                    // Inicijalizuj RestTemplate
+                                    RestTemplate restTemplate = new RestTemplate();
+
+                                    HttpHeaders headers = new HttpHeaders();
+                                    headers.setAll(req.headers().asHttpHeaders().toSingleValueMap());
+                                    headers.add("X-User-Id", userId);
+
+                                    HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+
+                                    // Formiraj URL
+                                    String url = ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH + "/" + req.pathVariable("availabilityId");
+
+                                    // Pozovi servis
+                                    ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+
+                                    return ServerResponse.status(response.getStatusCode())
+                                            .body(response.getBody());
+
+                                } catch (HttpClientErrorException | HttpServerErrorException ex) {
+                                    // Greške iz backend servisa – proslijedi status i poruku
+                                    HttpStatusCode status = ex.getStatusCode();
+                                    String responseBody = ex.getResponseBodyAsString();
+
+                                    return ServerResponse.status(status).body(responseBody);
+
+                                } catch (Exception ex) {
+                                    // Neočekivane greške
+                                    ex.printStackTrace();
+                                    return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                            .body("Unexpected error occurred: " + ex.getMessage());
+                                }
+
+                            } else {
+                                return ServerResponse.status(HttpStatus.UNAUTHORIZED).build();
+                            }
+                        })
 
                 // Reservation routes
                 .route(RequestPredicates.POST(RESERVATION_API_PATH),
