@@ -102,7 +102,7 @@ public class WebSecurityConfig {
 
                     // User service endpoints
                     .requestMatchers(HttpMethod.GET, "/api/user/{id}").hasAnyRole("GUEST", "HOST")
-                    .requestMatchers(HttpMethod.GET, "/api/user/all").hasAnyRole("GUEST", "HOST")
+                    .requestMatchers(HttpMethod.GET, "/api/user/all").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/user").hasAnyRole("GUEST", "HOST")
                     .requestMatchers(HttpMethod.GET, "/api/user/search").hasAnyRole("GUEST", "HOST")
                     .requestMatchers(HttpMethod.PUT, "/api/user/{id}").hasAnyRole("GUEST", "HOST")
@@ -121,6 +121,7 @@ public class WebSecurityConfig {
                     // Reservation endpoints
                     .requestMatchers(HttpMethod.POST, "/api/reservation").hasRole("GUEST")
                     .requestMatchers(HttpMethod.DELETE, "/api/reservation/{id}").hasRole("GUEST")
+                    .requestMatchers(HttpMethod.GET, "/api/guest/{guestId}").hasRole("GUEST")
                     .requestMatchers(HttpMethod.GET, "/api/reservation/all-host-pending-accommodation/{hostId}").hasRole("HOST")
                     .requestMatchers(HttpMethod.POST, "/api/reservation/save-manually-approved").hasRole("HOST")
 
@@ -168,9 +169,10 @@ public class WebSecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://devops-user:8081"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://localhost:4201", "http://devops-user:8081"));
         configuration.setAllowedMethods(Arrays.asList("POST", "PUT", "GET", "OPTIONS", "DELETE", "PATCH")); // or simply "*"
         configuration.setAllowedHeaders(Arrays.asList("*"));
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

@@ -171,6 +171,8 @@ public class Routes {
                         HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + RESERVATION_API_PATH))
                 .route(RequestPredicates.DELETE(RESERVATION_API_PATH + "/{id}"),
                         req -> HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + RESERVATION_API_PATH + "/" + req.pathVariable("id")).handle(req))
+                .route(RequestPredicates.GET(RESERVATION_API_PATH + "/guest/{guestId}"),
+                        req -> HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + RESERVATION_API_PATH + "/guest/" + req.pathVariable("guestId")).handle(req))
                 .route(RequestPredicates.GET(RESERVATION_API_PATH + "/all-host-pending-accommodation/{hostId}"),
                         req -> HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + RESERVATION_API_PATH + "/all-host-pending-accommodation/" + req.pathVariable("hostId")).handle(req))
                 .route(RequestPredicates.POST(RESERVATION_API_PATH + "/save-manually-approved"),
