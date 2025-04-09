@@ -1,7 +1,7 @@
 package com.devops.devops_gateway.controller;
 
 import com.devops.devops_gateway.client.UserClient;
-import com.devops.devops_gateway.dto.CreateUserDTO;
+import com.devops.devops_gateway.dto.*;
 import com.devops.devops_gateway.model.Role;
 import com.devops.devops_gateway.service.RoleService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,16 +18,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.devops.devops_gateway.dto.JwtAuthenticationRequest;
-import com.devops.devops_gateway.dto.UserRequest;
-import com.devops.devops_gateway.dto.UserTokenState;
 import com.devops.devops_gateway.exception.ResourceConflictException;
 import com.devops.devops_gateway.model.User;
 import com.devops.devops_gateway.service.UserService;
@@ -88,6 +81,15 @@ public class AuthenticationController {
 		UserTokenState token = this.login(authenticationRequest);
 		return ResponseEntity.ok(token);
 	}
+
+
+	@GetMapping("/current-user")
+	public ResponseEntity<UserDTO> getCurrentUser() {
+		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		UserDTO userDTO = UserDTO.from(user);
+		return ResponseEntity.ok(userDTO);
+	}
+
 
 
 	@PostMapping("/register")
