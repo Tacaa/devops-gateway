@@ -135,6 +135,13 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.PUT, "/api/host-review/{id}").hasRole("GUEST")
                     .requestMatchers(HttpMethod.DELETE, "/api/host-review/{id}").hasRole("GUEST")
 
+                    // Notifications endpoints
+                    .requestMatchers(HttpMethod.GET, "/api/notifications/{userId}").hasAnyRole("GUEST", "HOST")
+                    .requestMatchers(HttpMethod.PUT, "/api/notifications/read").hasAnyRole("GUEST", "HOST")
+
+                    .requestMatchers(HttpMethod.GET, "api/notifications-preferences/{userId}").hasAnyRole("GUEST", "HOST")
+                    .requestMatchers(HttpMethod.PUT, "/api/notifications-preferences").hasAnyRole("GUEST", "HOST")
+
                     .anyRequest().authenticated();
         });
         http.addFilterBefore(new TokenAuthenticationFilter(tokenUtils, userDetailsService()), UsernamePasswordAuthenticationFilter.class);

@@ -1,13 +1,22 @@
 package com.devops.devops_gateway.routes;
 
 
+import com.devops.devops_gateway.model.User;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
+
+import java.net.URI;
 
 @Configuration
 public class Routes {
@@ -24,6 +33,10 @@ public class Routes {
     private static final String REVIEW_SERVICE_BASE_URL = "http://devops-review:8084";
     private static final String ACCOMMODATION_REVIEW_API_PATH = "/api/accommodation-review";
     private static final String HOST_REVIEW_API_PATH = "/api/host-review";
+
+    private static final String NOTIICATIONS_SERVICE_BASE_URL = "http://devops-notifications:8083";
+    private static final String NOTIFICATION_API_PATH = "/api/notifications";
+    private static final String NOTIFICATIONS_PREFERENCES_API_PATH = "/api/notifications-preferences";
 
 
     @Bean
@@ -61,9 +74,97 @@ public class Routes {
                 .route(RequestPredicates.GET(AVAILABILITY_API_PATH + "/{accommodationId}"),
                         HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH))
                 .route(RequestPredicates.POST(AVAILABILITY_API_PATH),
-                        HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH))
+                req -> {
+                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+                    if (auth != null && auth.isAuthenticated()) {
+                        User user = (User) auth.getPrincipal();
+                        String userId = String.valueOf(user.getId());
+
+                        try {
+                            // Pročitaj tijelo zahtjeva
+                            String requestBody = req.body(String.class);
+
+                            RestTemplate restTemplate = new RestTemplate();
+
+                            HttpHeaders headers = new HttpHeaders();
+                            headers.setAll(req.headers().asHttpHeaders().toSingleValueMap());
+                            headers.add("X-User-Id", userId);
+
+                            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+                            String url = ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH;
+
+                            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+                            return ServerResponse.status(response.getStatusCode())
+                                    .body(response.getBody());
+
+                        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+                            // Detekcija poznatih grešaka po status kodu
+                            HttpStatusCode status = ex.getStatusCode();
+                            String responseBody = ex.getResponseBodyAsString();
+
+                            return ServerResponse.status(status).body(responseBody);
+
+                        } catch (Exception ex) {
+                            // Bilo koja druga greška
+                            ex.printStackTrace();
+                            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                    .body("Unexpected error occurred: " + ex.getMessage());
+                        }
+                    } else {
+                        return ServerResponse.status(HttpStatus.UNAUTHORIZED).build();
+                    }
+                })
+
                 .route(RequestPredicates.PUT(AVAILABILITY_API_PATH + "/{availabilityId}"),
-                        req -> HandlerFunctions.http(ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH + "/" + req.pathVariable("availabilityId")).handle(req))
+                        req -> {
+                            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+                            if (auth != null && auth.isAuthenticated()) {
+                                User user = (User) auth.getPrincipal();
+                                String userId = String.valueOf(user.getId());
+
+                                try {
+                                    // Pročitaj tijelo zahtjeva
+                                    String requestBody = req.body(String.class);
+
+                                    // Inicijalizuj RestTemplate
+                                    RestTemplate restTemplate = new RestTemplate();
+
+                                    HttpHeaders headers = new HttpHeaders();
+                                    headers.setAll(req.headers().asHttpHeaders().toSingleValueMap());
+                                    headers.add("X-User-Id", userId);
+
+                                    HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+
+                                    // Formiraj URL
+                                    String url = ACCOMMODATION_SERVICE_BASE_URL + AVAILABILITY_API_PATH + "/" + req.pathVariable("availabilityId");
+
+                                    // Pozovi servis
+                                    ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+
+                                    return ServerResponse.status(response.getStatusCode())
+                                            .body(response.getBody());
+
+                                } catch (HttpClientErrorException | HttpServerErrorException ex) {
+                                    // Greške iz backend servisa – proslijedi status i poruku
+                                    HttpStatusCode status = ex.getStatusCode();
+                                    String responseBody = ex.getResponseBodyAsString();
+
+                                    return ServerResponse.status(status).body(responseBody);
+
+                                } catch (Exception ex) {
+                                    // Neočekivane greške
+                                    ex.printStackTrace();
+                                    return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                            .body("Unexpected error occurred: " + ex.getMessage());
+                                }
+
+                            } else {
+                                return ServerResponse.status(HttpStatus.UNAUTHORIZED).build();
+                            }
+                        })
 
                 // Reservation routes
                 .route(RequestPredicates.POST(RESERVATION_API_PATH),
@@ -99,6 +200,19 @@ public class Routes {
                         req -> HandlerFunctions.http(REVIEW_SERVICE_BASE_URL + HOST_REVIEW_API_PATH + "/" + req.pathVariable("id")).handle(req))
                 .route(RequestPredicates.DELETE(HOST_REVIEW_API_PATH + "/{id}"),
                         req -> HandlerFunctions.http(REVIEW_SERVICE_BASE_URL + HOST_REVIEW_API_PATH + "/" + req.pathVariable("id")).handle(req))
+
+                // Notifications routes
+                .route(RequestPredicates.GET(NOTIFICATION_API_PATH + "/{userId}"),
+                        req -> HandlerFunctions.http(NOTIICATIONS_SERVICE_BASE_URL + NOTIFICATION_API_PATH + "/" + req.pathVariable("userId")).handle(req))
+                .route(RequestPredicates.PUT(NOTIFICATION_API_PATH + "/read"),
+                        HandlerFunctions.http(NOTIICATIONS_SERVICE_BASE_URL + NOTIFICATIONS_PREFERENCES_API_PATH + "/read"))
+
+                // Notifications preferences routes
+                .route(RequestPredicates.GET(NOTIFICATIONS_PREFERENCES_API_PATH + "/{userId}"),
+                        req -> HandlerFunctions.http(NOTIICATIONS_SERVICE_BASE_URL + NOTIFICATIONS_PREFERENCES_API_PATH + "/" + req.pathVariable("userId")).handle(req))
+                .route(RequestPredicates.PUT(NOTIFICATIONS_PREFERENCES_API_PATH),
+                        HandlerFunctions.http(NOTIICATIONS_SERVICE_BASE_URL + NOTIFICATIONS_PREFERENCES_API_PATH))
+
 
                 .build();
     }
