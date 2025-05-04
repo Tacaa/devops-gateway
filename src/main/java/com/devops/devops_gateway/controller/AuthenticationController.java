@@ -7,6 +7,7 @@ import com.devops.devops_gateway.service.RoleService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,6 +32,7 @@ import java.util.List;
 
 
 //Kontroler zaduzen za autentifikaciju korisnika
+@Slf4j
 @RestController
 @RequestMapping(value = "/api/auth", produces = MediaType.APPLICATION_JSON_VALUE)
 //@CrossOrigin(origins = "http://localhost:4200")
@@ -56,6 +58,8 @@ public class AuthenticationController {
 
 	//metoda koja sluzi za logovanje, izdvojena kako se ne bi duplirao kod i u registraciji
 	private UserTokenState login(JwtAuthenticationRequest authenticationRequest){
+		log.info("Attempting login for user: {}", authenticationRequest.getUsername());
+
 		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
 				authenticationRequest.getUsername(), authenticationRequest.getPassword()));
 
@@ -66,9 +70,8 @@ public class AuthenticationController {
 		int expiresIn = tokenUtils.getExpiredIn();
 
 		// LOGGING FOR DEBUGGING
-		System.out.println("User " + user.getUsername() + " successfully authenticated.");
-		System.out.println("SecurityContext authentication: " + SecurityContextHolder.getContext().getAuthentication());
-
+		log.info("User {} successfully authenticated. Token generated, expires in {} seconds.", user.getUsername(), expiresIn);
+		log.debug("Security context authentication set: {}", SecurityContextHolder.getContext().getAuthentication());
 
 		return new UserTokenState(jwt, expiresIn);
 	}
@@ -77,6 +80,7 @@ public class AuthenticationController {
 	@PostMapping("/login")
 	public ResponseEntity<UserTokenState> createAuthenticationToken(
 			@RequestBody JwtAuthenticationRequest authenticationRequest, HttpServletResponse response) {
+		log.info("Received login request for username: {}", authenticationRequest.getUsername());
 
 		UserTokenState token = this.login(authenticationRequest);
 		return ResponseEntity.ok(token);
@@ -87,6 +91,7 @@ public class AuthenticationController {
 	public ResponseEntity<UserDTO> getCurrentUser() {
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		UserDTO userDTO = UserDTO.from(user);
+		log.info("Fetching current authenticated user: {}", user.getUsername());
 		return ResponseEntity.ok(userDTO);
 	}
 
@@ -94,22 +99,27 @@ public class AuthenticationController {
 
 	@PostMapping("/register")
 	public ResponseEntity<UserTokenState> addUser(@RequestBody UserRequest userRequest, UriComponentsBuilder ucBuilder) {
+		log.info("Received registration request for username: {}", userRequest.getUsername());
+
 		if(userRequest.getFirstname() == null || userRequest.getLastname() == null || userRequest.getUsername() == null
 				|| userRequest.getPassword() == null || userRequest.getEmail() == null || userRequest.getRole() == null
 				|| userRequest.getAddress() == null || userRequest.getAddress().getStreet() == null ||  userRequest.getAddress().getCity() == null
 				||  userRequest.getAddress().getCountry() == null){
+			log.warn("Registration failed: Missing required fields.");
 			return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
 		}
 
 		User existUser = this.userService.findByUsername(userRequest.getUsername());
 
 		if (existUser != null) {
+			log.warn("Registration failed: Username {} already exists.", userRequest.getUsername());
 			throw new ResourceConflictException(existUser.getId(), "Username already exists");
 		}
 
 		existUser = this.userService.findByEmail(userRequest.getEmail());
 
 		if (existUser != null) {
+			log.warn("Registration failed: Email {} already exists.", userRequest.getEmail());
 			throw new ResourceConflictException(existUser.getId(), "Email already exists");
 		}
 
@@ -136,9 +146,11 @@ public class AuthenticationController {
 
 
 		user = this.userService.save(user);
+		log.info("User {} registered successfully.", user.getUsername());
 
 		boolean saved = userClient.createUserInUserService(userRequest);
 		if(!saved){
+			log.error("Failed to create user in external user service for username: {}", userRequest.getUsername());
 			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
 		}
 
@@ -155,10 +167,12 @@ public class AuthenticationController {
 		String authToken = tokenUtils.getToken(request);
 
 		if (authToken != null) {
+			log.info("Logging out token: {}", authToken);
 			tokenUtils.blacklistToken(authToken);
 		}
 
 		SecurityContextHolder.clearContext();
+		log.info("Security context cleared. User logged out.");
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 }
