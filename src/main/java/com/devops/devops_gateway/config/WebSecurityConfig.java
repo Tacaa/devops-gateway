@@ -142,6 +142,9 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.GET, "api/notifications-preferences/{userId}").hasAnyRole("GUEST", "HOST")
                     .requestMatchers(HttpMethod.PUT, "/api/notifications-preferences").hasAnyRole("GUEST", "HOST")
 
+                    .requestMatchers("/actuator/prometheus").permitAll()
+                    .requestMatchers("/actuator/**").permitAll()
+
                     .anyRequest().authenticated();
         });
         http.addFilterBefore(new TokenAuthenticationFilter(tokenUtils, userDetailsService()), UsernamePasswordAuthenticationFilter.class);
@@ -168,7 +171,7 @@ public class WebSecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://devops-user:8081"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://devops-user:8081", "http://prometheus:9090"));
         configuration.setAllowedMethods(Arrays.asList("POST", "PUT", "GET", "OPTIONS", "DELETE", "PATCH")); // or simply "*"
         configuration.setAllowedHeaders(Arrays.asList("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
