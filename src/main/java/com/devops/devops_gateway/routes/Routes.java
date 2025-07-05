@@ -2,6 +2,7 @@ package com.devops.devops_gateway.routes;
 
 
 import com.devops.devops_gateway.model.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
