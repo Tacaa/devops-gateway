@@ -37,7 +37,7 @@ public class Routes {
     private static final String ACCOMMODATION_REVIEW_API_PATH = "/api/accommodation-review";
     private static final String HOST_REVIEW_API_PATH = "/api/host-review";
     
-    @Value("${nofification.service.url}")
+    @Value("${notification.service.url}")
     private String notificationServiceUrl;
     private static final String NOTIFICATION_API_PATH = "/api/notifications";
     private static final String NOTIFICATIONS_PREFERENCES_API_PATH = "/api/notifications-preferences";
