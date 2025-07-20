@@ -171,7 +171,7 @@ public class WebSecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://devops-user:8081", "http://prometheus:9090", "http://frontend-service:4200", "http://frontend-service.default.svc.cluster.local:4200", "http://prometheus.default.svc.cluster.local:9090"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://localhost", "http://devops-user:8081", "http://prometheus:9090", "http://frontend-service:4200", "http://frontend-service.default.svc.cluster.local:4200", "http://prometheus.default.svc.cluster.local:9090"));
         configuration.setAllowedMethods(Arrays.asList("POST", "PUT", "GET", "OPTIONS", "DELETE", "PATCH")); // or simply "*"
         configuration.setAllowedHeaders(Arrays.asList("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
