@@ -123,6 +123,7 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.DELETE, "/api/reservation/{id}").hasRole("GUEST")
                     .requestMatchers(HttpMethod.GET, "/api/reservation/all-host-pending-accommodation/{hostId}").hasRole("HOST")
                     .requestMatchers(HttpMethod.POST, "/api/reservation/save-manually-approved").hasRole("HOST")
+                    .requestMatchers(HttpMethod.GET, "/api/reservation/guest/{guestId}").hasRole("GUEST")
 
                     // Review endpoints
                     .requestMatchers(HttpMethod.GET, "/api/accommodation-review/**").permitAll()
